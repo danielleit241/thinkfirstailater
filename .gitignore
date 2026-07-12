@@ -1,0 +1,17 @@
+# forge generated files
+.claude/
+CLAUDE.md
+claude.md
+.codex/
+.agents/
+AGENTS.md
+agents.md
+.ck.json
+.mcp.json
+.forge.lock.json
+session-data/
+
+# setup files
+frontend/SETUP.md
+frontend/ui-components-widgets-setup.md
+frontend/SEO.md
