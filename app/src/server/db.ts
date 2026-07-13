@@ -13,19 +13,21 @@ const isNewColdStart = globalForPrisma.prisma === undefined
 // Neon/Supabase's pooled endpoint presents a cert chain that node-postgres's
 // stricter verify-full-by-default (pg 8.16+) rejects as self-signed. Local
 // Docker Postgres has no TLS at all, so only relax verification for remote
-// hosts.
-function isLocalConnection(connectionString: string) {
-  return /^postgres(ql)?:\/\/[^@]*@(localhost|127\.0\.0\.1)[:/]/.test(
-    connectionString,
-  )
+// hosts. This has to be encoded as `sslmode` in the connection string itself
+// — `pg.ConnectionParameters` re-parses `connectionString` and overwrites any
+// `ssl` option passed alongside it (see `pg/lib/connection-parameters.js`).
+function withRelaxedSsl(connectionString: string) {
+  const url = new URL(connectionString)
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return connectionString
+  }
+  url.searchParams.set("sslmode", "no-verify")
+  return url.toString()
 }
 
 function createPrismaClient() {
   const adapter = new PrismaPg({
-    connectionString: env.DATABASE_URL,
-    ssl: isLocalConnection(env.DATABASE_URL)
-      ? undefined
-      : { rejectUnauthorized: false },
+    connectionString: withRelaxedSsl(env.DATABASE_URL),
   })
   return new PrismaClient({ adapter })
 }
