@@ -12,6 +12,10 @@ agents.md
 session-data/
 
 # setup files
-frontend/SETUP.md
-frontend/ui-components-widgets-setup.md
-frontend/SEO.md
+app/SEO.md
+app/ui-components-widgets-setup.md
+app/SETUP.md
+
+# docs
+plans/
+docs/

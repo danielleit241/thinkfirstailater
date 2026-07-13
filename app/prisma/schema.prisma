@@ -1,0 +1,288 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ActivityType {
+  LESSON
+  QUIZ
+  CHECKLIST
+}
+
+enum RiceLedgerEntryType {
+  DAILY_REWARD
+  VOUCHER_REDEMPTION
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          Role      @default(USER)
+  sessions      Session[]
+  accounts      Account[]
+  completions   ActivityCompletion[]
+  dailyRewards  DailyReward[]
+  ledgerEntries RiceLedgerEntry[]
+  riceBalance   RiceBalance?
+  voucherRedemptions VoucherRedemption[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+/// A named grouping of learning content (e.g. "Đặt câu hỏi tốt"). Ordered by
+/// `sortOrder`; `active: false` hides it from the USER-facing catalog.
+model Track {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  modules     Module[]
+
+  @@map("track")
+}
+
+/// A learning unit within a Track, containing an ordered list of activities.
+model Module {
+  id          String     @id @default(cuid())
+  trackId     String
+  track       Track      @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  slug        String     @unique
+  title       String
+  description String
+  sortOrder   Int        @default(0)
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  activities  Activity[]
+
+  @@index([trackId])
+  @@map("module")
+}
+
+/// Real learning content: a lesson, quiz, or self-check checklist. `payload`
+/// shape is discriminated by `type` and validated server-side (see
+/// `src/server/learning/schemas.ts`). For QUIZ, the correct answer lives in
+/// `payload` and must never be sent to the client before submit.
+model Activity {
+  id        String       @id @default(cuid())
+  moduleId  String
+  module    Module       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  slug      String       @unique
+  title     String
+  type      ActivityType
+  sortOrder Int          @default(0)
+  active    Boolean      @default(true)
+  payload   Json
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  completions ActivityCompletion[]
+
+  @@index([moduleId])
+  @@map("activity")
+}
+
+/// A durable record that a user has actually completed a given activity —
+/// quiz answered correctly, or checklist fully ticked. Written only by the
+/// server (see `src/server/learning/queries.ts` for the completion rules
+/// per activity type); the client never supplies a "completed" flag that is
+/// trusted directly. The `(userId, activityId)` unique constraint enforces
+/// idempotency at the DB layer (paired with `upsert` in the service), so a
+/// resubmit can never create a second row for the same user + activity.
+model ActivityCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId  String
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+
+  @@unique([userId, activityId])
+  @@index([activityId])
+  @@map("activity_completion")
+}
+
+/// The currently effective daily-reward rice amount. A single mutable row
+/// (read via `findFirst` ordered by `createdAt`) — Phase 8 will let an admin
+/// update `dailyRewardAmount` on this row in place. This is deliberately NOT
+/// versioned/history-tracked: `DailyReward.amount` snapshots the amount at
+/// grant time, so changing this row later never changes past ledger/reward
+/// history (see `RewardConfig` usage in `src/server/rewards/service.ts`).
+model RewardConfig {
+  id                String   @id @default(cuid())
+  dailyRewardAmount Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("reward_config")
+}
+
+/// One row per user per business date (Asia/Ho_Chi_Minh) that actually
+/// granted the daily rice reward. `amount` and `streakCount` are snapshots
+/// taken at grant time — never recomputed later. The `(userId, businessDate)`
+/// unique constraint is the sole mechanism preventing a double grant for the
+/// same user/day, including under concurrent requests (see
+/// `src/server/rewards/service.ts`, which relies on the DB rejecting the
+/// second concurrent insert with a P2002 error instead of any in-memory lock).
+model DailyReward {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessDate DateTime @db.Date
+  amount       Int
+  streakCount  Int
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, businessDate])
+  @@index([userId])
+  @@map("daily_reward")
+}
+
+/// Append-only audit trail of every rice balance change. Never updated or
+/// deleted after creation. `referenceId` points at the row that caused this
+/// entry (e.g. a `DailyReward.id` for `entryType: DAILY_REWARD`).
+model RiceLedgerEntry {
+  id          String              @id @default(cuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int
+  entryType   RiceLedgerEntryType
+  referenceId String
+  createdAt   DateTime            @default(now())
+
+  @@index([userId])
+  @@map("rice_ledger_entry")
+}
+
+/// One row per user: the current rice balance, a projection maintained
+/// atomically (via `increment`, never read-then-write) in the same
+/// transaction as each `RiceLedgerEntry` insert. `SUM(RiceLedgerEntry.amount)`
+/// for a user must always equal this row's `balance`.
+model RiceBalance {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@map("rice_balance")
+}
+
+/// The currently effective mock-voucher catalog. Admin (Phase 8) will edit
+/// `riceCost`/`active` on this row in place — this table deliberately has no
+/// version history of its own; every redemption snapshots the price/title/
+/// brand it saw at redeem time onto `VoucherRedemption`, so changing a
+/// voucher here later never rewrites past redemption history. Mock only: no
+/// real voucher codes, no inventory/quantity, no partner integration.
+model Voucher {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  brand       String
+  title       String
+  description String
+  riceCost    Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  redemptions VoucherRedemption[]
+
+  @@map("voucher")
+}
+
+/// One row per successful voucher redemption. `riceCostSnapshot` /
+/// `voucherTitleSnapshot` / `voucherBrandSnapshot` are captured at redeem
+/// time and never recomputed — history display reads these, never
+/// `Voucher`'s current fields, so a later price/title change never changes
+/// past history. `(userId, idempotencyKey)` is the DB-level unique
+/// constraint that makes redemption idempotent under retries/double-submits
+/// (see `src/server/vouchers/service.ts`, which relies on the DB rejecting a
+/// second concurrent insert with a P2002 error instead of any in-memory
+/// lock — same pattern as `DailyReward`/`ActivityCompletion`).
+/// `ledgerEntryId` points at the exact `RiceLedgerEntry` this redemption
+/// caused (1:1).
+model VoucherRedemption {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voucherId            String
+  voucher              Voucher  @relation(fields: [voucherId], references: [id])
+  idempotencyKey       String
+  riceCostSnapshot     Int
+  voucherTitleSnapshot String
+  voucherBrandSnapshot String
+  ledgerEntryId        String   @unique
+  createdAt            DateTime @default(now())
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([voucherId])
+  @@map("voucher_redemption")
+}
