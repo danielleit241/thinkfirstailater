@@ -249,6 +249,9 @@ model Voucher {
   title       String
   description String
   riceCost    Int
+  /// Static illustration path under `public/`, e.g. `/vouchers/coffee.svg`.
+  /// Always a same-origin `public/` asset, never an uploaded or external URL.
+  imageUrl    String   @default("/vouchers/gift.svg")
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

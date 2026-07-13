@@ -1,0 +1,54 @@
+name: Post-deploy (seed + admin bootstrap)
+
+# Vercel's own GitHub integration builds and deploys on every push to main.
+# Set its Build Command to `prisma migrate deploy && next build` in the
+# Vercel project's Settings → Build & Deployment — that sequences schema
+# migrations before the new code ever serves traffic, without this workflow's
+# involvement.
+#
+# This workflow only owns the two steps that must NOT run as part of every
+# Vercel build (previews included): reseeding demo content and bootstrapping
+# the admin user. Both are idempotent (see app/src/server/vouchers/seed-data.ts,
+# app/src/server/learning/seed-data.ts, app/scripts/admin-bootstrap.ts), so
+# re-running on every push to main is safe and cheap.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/prisma/**"
+      - "app/src/server/**/seed-data.ts"
+      - "app/scripts/admin-bootstrap.ts"
+  workflow_dispatch: {}
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - run: npm ci
+
+      - name: Seed learning catalog + voucher demo data
+        run: npm run db:seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Bootstrap admin user
+        run: npm run admin:bootstrap
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+          ADMIN_BOOTSTRAP_EMAIL: ${{ secrets.ADMIN_BOOTSTRAP_EMAIL }}
+          ADMIN_BOOTSTRAP_PASSWORD: ${{ secrets.ADMIN_BOOTSTRAP_PASSWORD }}

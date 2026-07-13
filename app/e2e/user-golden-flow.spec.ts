@@ -59,7 +59,7 @@ test.describe("Golden flow: User", () => {
 
     const welcomeVoucher = page
       .getByRole("article")
-      .filter({ hasText: "Voucher chào mừng người học (demo)" })
+      .filter({ hasText: "Voucher chào mừng người học " })
     await expect(welcomeVoucher).toHaveCount(1)
     await welcomeVoucher.getByRole("button", { name: "Đổi quà" }).click()
     await expect(welcomeVoucher.getByText(/Dùng \d+ lúa để đổi/)).toBeVisible()
@@ -85,8 +85,6 @@ test.describe("Golden flow: User", () => {
     await expect(
       page.getByRole("heading", { name: "Những phần thưởng bạn đã đổi." }),
     ).toBeVisible()
-    await expect(
-      page.getByText("Voucher chào mừng người học (demo)"),
-    ).toBeVisible()
+    await expect(page.getByText("Voucher chào mừng người học ")).toBeVisible()
   })
 })

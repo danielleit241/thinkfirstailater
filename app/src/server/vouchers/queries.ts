@@ -6,6 +6,7 @@ export type VoucherCatalogItem = {
   title: string
   description: string
   riceCost: number
+  imageUrl: string
 }
 
 /**
@@ -26,6 +27,7 @@ export async function listActiveVouchers(): Promise<VoucherCatalogItem[]> {
     title: voucher.title,
     description: voucher.description,
     riceCost: voucher.riceCost,
+    imageUrl: voucher.imageUrl,
   }))
 }
 

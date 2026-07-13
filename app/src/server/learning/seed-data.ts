@@ -4,11 +4,12 @@
  * integration test that proves running it twice does not create duplicates.
  *
  * Every Track/Module/Activity is `upsert`-ed by its stable `slug`. Content is
- * a short "golden learning path": 3 tracks, 1 module each, a handful of real
- * (non-placeholder) LESSON/QUIZ/CHECKLIST activities — enough for a ≤5
- * minute demo, not a full course. One activity is seeded `active: false` on
- * purpose, so tests/manual checks can confirm inactive content stays hidden
- * from the catalog.
+ * a "golden learning path": 3 tracks, 3 modules each, real (non-placeholder)
+ * LESSON/QUIZ/CHECKLIST activities that build on one another within a track —
+ * enough to make the catalog and track-detail views feel like a real
+ * curriculum, not a full production course. One activity is seeded
+ * `active: false` on purpose, so tests/manual checks can confirm inactive
+ * content stays hidden from the catalog.
  */
 import { prisma } from "@/server/db"
 import {
@@ -160,6 +161,165 @@ export const learningCatalogSeed: TrackSeed[] = [
           },
         ],
       },
+      {
+        slug: "dat-cau-hoi-tot-rang-buoc",
+        title: "Thêm ràng buộc và ngữ cảnh",
+        description:
+          "Sau chủ đề này, bạn biết thêm ràng buộc, ngữ cảnh và định dạng đầu ra để câu trả lời của AI dùng được ngay, không phải hỏi lại nhiều lần.",
+        sortOrder: 1,
+        activities: [
+          {
+            slug: "dat-cau-hoi-tot-bai-2-rang-buoc",
+            title: "Thêm ràng buộc để câu trả lời dùng được ngay",
+            type: "LESSON",
+            sortOrder: 0,
+            payload: lessonPayloadSchema.parse({
+              body: "Một câu hỏi không có ràng buộc buộc AI phải đoán: đoán độ dài, đoán văn phong, đoán bạn đã biết gì rồi. Trước khi gửi câu hỏi, thêm 4 điều: (1) Ai sẽ đọc câu trả lời; (2) Định dạng mong muốn (đoạn văn, bảng, danh sách bước); (3) Giới hạn (độ dài, công nghệ, ngân sách); (4) Điều không nên làm. Bốn ràng buộc này biến một câu hỏi mơ hồ thành một yêu cầu có thể chấm được đúng/sai.",
+              objective:
+                "Thêm ràng buộc cụ thể để nhận câu trả lời dùng được ngay, không phải bản nháp cần sửa lại.",
+              example: {
+                before: "Viết cho tôi một email xin lỗi khách hàng.",
+                after:
+                  "Khách hàng bị giao hàng trễ 3 ngày do lỗi vận chuyển. Viết email xin lỗi dài tối đa 120 từ, giọng chuyên nghiệp nhưng không xin lỗi thái quá, có đề xuất một hình thức bù đắp cụ thể, không nhắc đến lỗi nội bộ của công ty.",
+              },
+              practice: {
+                prompt: "Lấy một câu hỏi bạn từng gửi AI và thêm 4 ràng buộc.",
+                steps: [
+                  "Ghi rõ ai sẽ dùng kết quả này.",
+                  "Chọn định dạng đầu ra cụ thể (bảng, danh sách, đoạn văn ngắn).",
+                  "Thêm một giới hạn thật (độ dài, công cụ, thời gian).",
+                  "Ghi rõ một điều bạn không muốn AI làm.",
+                ],
+              },
+              takeaway:
+                "Ràng buộc không giới hạn AI — nó giúp AI nhắm đúng thứ bạn cần ngay lần đầu.",
+            }),
+          },
+          {
+            slug: "dat-cau-hoi-tot-quiz-2",
+            title: "Kiểm tra nhanh: Ràng buộc còn thiếu",
+            type: "QUIZ",
+            sortOrder: 1,
+            payload: quizPayloadSchema.parse({
+              question:
+                '"Viết cho tôi một bài đăng về sản phẩm mới." Ràng buộc nào sau đây quan trọng nhất còn thiếu?',
+              options: [
+                { id: "length", text: "Không có giới hạn độ dài hoặc nền tảng đăng" },
+                { id: "grammar", text: "Không có yêu cầu về chính tả" },
+                { id: "emoji", text: "Không nói rõ có dùng emoji hay không" },
+              ],
+              correctOptionId: "length",
+              explanation:
+                "Nền tảng đăng (Facebook, LinkedIn, email nội bộ) và độ dài quyết định gần như toàn bộ văn phong và cấu trúc bài viết — thiếu nó, AI phải đoán và khả năng sai rất cao. Chính tả và emoji là chi tiết nhỏ hơn nhiều.",
+            }),
+          },
+          {
+            slug: "dat-cau-hoi-tot-checklist-2",
+            title: "Tự kiểm tra ràng buộc trước khi gửi",
+            type: "CHECKLIST",
+            sortOrder: 2,
+            payload: checklistPayloadSchema.parse({
+              items: [
+                {
+                  id: "audience",
+                  label: "Tôi đã nói rõ đối tượng đọc",
+                  detail: "AI biết đang viết cho ai để chọn văn phong phù hợp.",
+                },
+                {
+                  id: "format",
+                  label: "Tôi đã chọn định dạng đầu ra",
+                  detail: "Bảng, danh sách bước hay đoạn văn — nói rõ thay vì để AI tự chọn.",
+                },
+                {
+                  id: "limit",
+                  label: "Tôi đã thêm ít nhất một giới hạn thật",
+                  detail: "Độ dài, công nghệ được phép dùng, hoặc thời hạn.",
+                },
+              ],
+            }),
+          },
+        ],
+      },
+      {
+        slug: "dat-cau-hoi-tot-tiep-noi",
+        title: "Đặt câu hỏi tiếp nối",
+        description:
+          "Sau chủ đề này, bạn biết đặt câu hỏi tiếp nối để thu hẹp một câu trả lời mơ hồ thành thứ dùng được, thay vì hỏi lại từ đầu.",
+        sortOrder: 2,
+        activities: [
+          {
+            slug: "dat-cau-hoi-tot-bai-3-tiep-noi",
+            title: "Thu hẹp câu trả lời mơ hồ bằng câu hỏi tiếp nối",
+            type: "LESSON",
+            sortOrder: 0,
+            payload: lessonPayloadSchema.parse({
+              body: 'Khi câu trả lời của AI còn mơ hồ, phản xạ phổ biến nhất là viết lại toàn bộ câu hỏi từ đầu — điều này lãng phí và thường ra kết quả tệ hơn. Thay vào đó, hãy chỉ đúng phần mơ hồ và hỏi tiếp: "Ở bước 2 bạn nói X, cụ thể là gì?" hoặc "Giả sử Y không đúng thì cách này còn ổn không?". Câu hỏi tiếp nối giữ nguyên ngữ cảnh đã có, chỉ khoan sâu vào đúng điểm bạn chưa chắc.',
+              objective:
+                "Dùng câu hỏi tiếp nối để khoan sâu vào phần mơ hồ, không phải hỏi lại từ đầu.",
+              example: {
+                before:
+                  "(Sau khi AI trả lời chung) Có thể giải thích lại rõ hơn không?",
+                after:
+                  "Ở gợi ý thứ 2 bạn giả định traffic tăng đều — nếu traffic tăng đột biến theo giờ thì gợi ý đó còn đúng không? Nếu không, phương án nào thay thế?",
+              },
+              practice: {
+                prompt: "Tìm một câu trả lời AI gần đây còn mơ hồ với bạn.",
+                steps: [
+                  "Khoanh đúng một câu hoặc một giả định còn mơ hồ.",
+                  "Viết câu hỏi tiếp nối nhắc lại đúng phần đó, không viết lại toàn bộ.",
+                  "Yêu cầu AI xác nhận hoặc sửa lại phần đó thay vì trả lời lại từ đầu.",
+                ],
+              },
+              takeaway:
+                "Câu hỏi tiếp nối tiết kiệm ngữ cảnh và cho câu trả lời sắc hơn một câu hỏi viết lại từ đầu.",
+            }),
+          },
+          {
+            slug: "dat-cau-hoi-tot-quiz-3",
+            title: "Kiểm tra nhanh: Câu hỏi tiếp nối tốt",
+            type: "QUIZ",
+            sortOrder: 1,
+            payload: quizPayloadSchema.parse({
+              question:
+                "AI vừa đề xuất 3 cách tối ưu chi phí nhưng không nói cách nào rủi ro nhất. Câu hỏi tiếp nối nào tốt nhất?",
+              options: [
+                {
+                  id: "restart",
+                  text: "Viết lại từ đầu: hãy tối ưu chi phí cho tôi",
+                },
+                {
+                  id: "focus",
+                  text: "Trong 3 cách trên, cách nào rủi ro nhất và vì sao?",
+                },
+                { id: "vague", text: "Trả lời hay đó, còn gì thêm không?" },
+              ],
+              correctOptionId: "focus",
+              explanation:
+                "Câu hỏi tiếp nối tốt giữ nguyên ngữ cảnh (3 cách đã có) và khoan đúng vào phần còn thiếu (mức rủi ro), thay vì viết lại từ đầu hoặc hỏi mơ hồ không có hướng cụ thể.",
+            }),
+          },
+          {
+            slug: "dat-cau-hoi-tot-checklist-3",
+            title: "Tự đánh giá trước khi chấp nhận câu trả lời",
+            type: "CHECKLIST",
+            sortOrder: 2,
+            payload: checklistPayloadSchema.parse({
+              items: [
+                {
+                  id: "no-vague-left",
+                  label: "Không còn phần nào tôi thấy mơ hồ",
+                  detail: "Mọi giả định quan trọng trong câu trả lời đã được hỏi lại và làm rõ.",
+                },
+                {
+                  id: "context-kept",
+                  label: "Tôi đã giữ ngữ cảnh khi hỏi tiếp",
+                  detail: "Câu hỏi tiếp nối nhắc đúng phần cần làm rõ, không viết lại từ đầu.",
+                },
+              ],
+            }),
+          },
+        ],
+      },
     ],
   },
   {
@@ -225,6 +385,142 @@ export const learningCatalogSeed: TrackSeed[] = [
               correctOptionId: "ask-critique",
               explanation:
                 "Đưa lập luận có sẵn cho AI phản biện giúp bạn giữ quyền quyết định và phát hiện lỗ hổng, thay vì giao toàn bộ tư duy cho AI ngay từ đầu.",
+            }),
+          },
+        ],
+      },
+      {
+        slug: "tu-duy-kiem-chung-diem-yeu",
+        title: "Tìm điểm yếu trong lập luận",
+        description:
+          "Sau chủ đề này, bạn biết tự tìm giả định yếu nhất và phản ví dụ trong lập luận của mình trước khi nhờ AI chỉ ra.",
+        sortOrder: 1,
+        activities: [
+          {
+            slug: "tu-duy-kiem-chung-bai-2",
+            title: "Tự đóng vai người phản biện trước",
+            type: "LESSON",
+            sortOrder: 0,
+            payload: lessonPayloadSchema.parse({
+              body: 'Trước khi đưa lập luận cho AI, hãy tự hỏi: "Điều gì sẽ chứng minh kết luận này sai?" Nếu bạn không trả lời được, lập luận có thể chưa đủ cụ thể để kiểm chứng. Sau đó, khoanh giả định yếu nhất — thường là giả định bạn tin nhiều nhất nhưng kiểm tra ít nhất. Tự làm bước này trước giúp bạn không phụ thuộc hoàn toàn vào AI để tìm lỗ hổng, và khi AI chỉ ra điểm khác, bạn dễ nhận ra AI đúng hay chỉ đang đoán.',
+              objective:
+                "Tự xác định giả định yếu nhất trong lập luận của mình trước khi nhờ AI phản biện.",
+              example: {
+                before: "Tính năng này chắc sẽ được dùng nhiều vì giao diện đẹp.",
+                after:
+                  "Giả định yếu nhất: 'giao diện đẹp' dẫn đến 'dùng nhiều' — chưa có dữ liệu nào chứng minh mối liên hệ này. Điều sẽ chứng minh tôi sai: người dùng thử rồi bỏ vì thiếu tính năng cốt lõi, bất kể giao diện.",
+              },
+              practice: {
+                prompt: "Chọn một kết luận bạn đang tin và tự phản biện trước.",
+                steps: [
+                  'Viết câu trả lời cho: "điều gì sẽ chứng minh kết luận này sai?"',
+                  "Khoanh giả định bạn tin nhiều nhất nhưng kiểm tra ít nhất.",
+                  "Chỉ sau đó mới đưa lập luận cho AI để đối chiếu với điểm bạn vừa tìm.",
+                ],
+              },
+              takeaway:
+                "Tự tìm điểm yếu trước giúp bạn phân biệt được khi AI phản biện đúng và khi AI chỉ đang đoán.",
+            }),
+          },
+          {
+            slug: "tu-duy-kiem-chung-quiz-2",
+            title: "Kiểm tra nhanh: Giả định yếu nhất",
+            type: "QUIZ",
+            sortOrder: 1,
+            payload: quizPayloadSchema.parse({
+              question:
+                '"Đối thủ vừa giảm giá 20%, chúng ta nên giảm giá theo ngay để không mất khách." Giả định yếu nhất ở đây là gì?',
+              options: [
+                {
+                  id: "price-sensitive",
+                  text: "Khách hàng rời đi chủ yếu vì giá, không vì lý do khác",
+                },
+                { id: "competitor-real", text: "Đối thủ thực sự đã giảm giá 20%" },
+                { id: "discount-exists", text: "Giảm giá là một chiến lược có thể thực hiện được" },
+              ],
+              correctOptionId: "price-sensitive",
+              explanation:
+                "Giả định 'khách rời đi vì giá' là điều chưa được kiểm chứng và có nhiều nguyên nhân khác có thể quan trọng hơn (chất lượng, dịch vụ, thói quen) — đây là giả định yếu nhất, đáng kiểm tra trước khi hành động theo nó.",
+            }),
+          },
+          {
+            slug: "tu-duy-kiem-chung-checklist-1",
+            title: "Tự kiểm tra lập luận trước khi hoàn tất",
+            type: "CHECKLIST",
+            sortOrder: 2,
+            payload: checklistPayloadSchema.parse({
+              items: [
+                {
+                  id: "falsifiable",
+                  label: "Tôi biết điều gì sẽ chứng minh mình sai",
+                  detail: "Nếu không trả lời được, kết luận có thể chưa đủ cụ thể.",
+                },
+                {
+                  id: "weakest-assumption",
+                  label: "Tôi đã khoanh giả định yếu nhất",
+                  detail: "Giả định tin nhiều nhất nhưng kiểm tra ít nhất trong lập luận.",
+                },
+              ],
+            }),
+          },
+        ],
+      },
+      {
+        slug: "tu-duy-kiem-chung-doi-chieu",
+        title: "Đối chiếu nhiều nguồn",
+        description:
+          "Sau chủ đề này, bạn biết đối chiếu câu trả lời AI với ít nhất một nguồn độc lập trước khi tin và sử dụng cho quyết định quan trọng.",
+        sortOrder: 2,
+        activities: [
+          {
+            slug: "tu-duy-kiem-chung-bai-3",
+            title: "Không dừng ở một câu trả lời AI duy nhất",
+            type: "LESSON",
+            sortOrder: 0,
+            payload: lessonPayloadSchema.parse({
+              body: "Với quyết định có hậu quả thật (tiền, sức khoẻ, hợp đồng, code chạy trên production), một câu trả lời AI duy nhất không đủ để tin. Đối chiếu bằng một trong ba cách: (1) Nguồn độc lập — tài liệu chính thức, số liệu thật; (2) Góc nhìn thứ hai — hỏi lại AI với cách đặt vấn đề khác để xem có ra kết luận giống nhau; (3) Kiểm tra thực tế nhỏ — chạy thử, đo thử trước khi áp dụng toàn bộ. Việc quan trọng hơn thì cần đối chiếu kỹ hơn, không phải mọi câu hỏi đều cần cả ba cách.",
+              objective:
+                "Chọn đúng mức đối chiếu cần thiết theo hậu quả thật của quyết định.",
+              example: {
+                before:
+                  "AI nói đoạn code này an toàn để chạy trên production nên tôi deploy luôn.",
+                after:
+                  "AI nói đoạn code an toàn. Tôi đối chiếu bằng cách chạy test trên staging và tự đọc lại phần xử lý lỗi trước khi deploy — vì đây là thay đổi ảnh hưởng thanh toán, mức rủi ro cao.",
+              },
+              practice: {
+                prompt: "Chọn một quyết định có hậu quả thật bạn đang cân nhắc.",
+                steps: [
+                  "Ước lượng mức hậu quả nếu câu trả lời AI sai.",
+                  "Chọn một cách đối chiếu phù hợp với mức hậu quả đó.",
+                  "Ghi lại kết quả đối chiếu trước khi quyết định dùng hay không.",
+                ],
+              },
+              takeaway:
+                "Mức đối chiếu cần thiết tăng theo hậu quả thật của quyết định, không phải theo độ tự tin của câu trả lời AI.",
+            }),
+          },
+          {
+            slug: "tu-duy-kiem-chung-quiz-3",
+            title: "Kiểm tra nhanh: Chọn cách đối chiếu phù hợp",
+            type: "QUIZ",
+            sortOrder: 1,
+            payload: quizPayloadSchema.parse({
+              question:
+                "AI gợi ý một liều lượng thực phẩm bổ sung cho bạn dùng hàng ngày. Cách đối chiếu phù hợp nhất là gì?",
+              options: [
+                {
+                  id: "trust",
+                  text: "Tin luôn vì AI trả lời rất tự tin và chi tiết",
+                },
+                {
+                  id: "official",
+                  text: "Đối chiếu với hướng dẫn chính thức hoặc hỏi ý kiến người có chuyên môn",
+                },
+                { id: "reask", text: "Hỏi lại AI cùng một câu để xem có trả lời giống không" },
+              ],
+              correctOptionId: "official",
+              explanation:
+                "Sức khoẻ là hậu quả thật và nghiêm trọng — mức đối chiếu cần cao nhất: nguồn chính thức hoặc chuyên môn thật, không chỉ hỏi lại AI cùng một nguồn kiến thức.",
             }),
           },
         ],
@@ -297,6 +593,137 @@ export const learningCatalogSeed: TrackSeed[] = [
                     "Tôi hiểu và có thể giải thích kết quả cuối cùng bằng lời của chính mình.",
                 },
               ],
+            }),
+          },
+        ],
+      },
+      {
+        slug: "quy-trinh-cong-tac-ai-phan-vai",
+        title: "Phân vai rõ giữa bạn và AI",
+        description:
+          "Sau chủ đề này, bạn biết phân vai: phần nào bạn tự quyết, phần nào AI chỉ hỗ trợ — để trách nhiệm không bị đổ nhầm chỗ.",
+        sortOrder: 1,
+        activities: [
+          {
+            slug: "quy-trinh-cong-tac-ai-bai-2",
+            title: "Ai là người quyết định cuối cùng?",
+            type: "LESSON",
+            sortOrder: 0,
+            payload: lessonPayloadSchema.parse({
+              body: "Trước khi bắt đầu một việc có AI hỗ trợ, hãy xác định trước: việc này ai là 'người quyết' và AI chỉ là 'người hỗ trợ'. Với việc có hậu quả cao (merge code, gửi hợp đồng, chẩn đoán, quyết định tài chính), người quyết luôn phải là một người thật hiểu bối cảnh đầy đủ — AI có thể soạn, gợi ý, kiểm tra nhanh, nhưng không được là điểm dừng cuối cùng. Phân vai rõ từ đầu giúp tránh tình huống 'AI bảo vậy nên tôi làm vậy' khi có sự cố xảy ra.",
+              objective:
+                "Xác định trước ai là người quyết định cuối cùng cho một việc có AI hỗ trợ.",
+              example: {
+                before: "AI review code thấy ổn nên tôi merge thẳng vào production.",
+                after:
+                  "AI review giúp tôi phát hiện vài lỗi nhỏ, nhưng người quyết định merge vẫn là tôi — tôi tự chạy lại test suite và đọc phần thay đổi liên quan đến thanh toán trước khi merge.",
+              },
+              practice: {
+                prompt: "Chọn một việc bạn đang làm cùng AI và phân vai rõ.",
+                steps: [
+                  "Ghi rõ việc này ai là người quyết định cuối cùng.",
+                  "Ghi rõ AI được hỗ trợ phần nào, không được quyết phần nào.",
+                  "Nếu có sự cố, ghi rõ ai là người chịu trách nhiệm giải trình.",
+                ],
+              },
+              takeaway:
+                "AI hỗ trợ nhiều việc, nhưng người quyết định cuối cùng cho việc có hậu quả cao vẫn phải là một người thật.",
+            }),
+          },
+          {
+            slug: "quy-trinh-cong-tac-ai-quiz-1",
+            title: "Kiểm tra nhanh: Ai nên quyết định?",
+            type: "QUIZ",
+            sortOrder: 1,
+            payload: quizPayloadSchema.parse({
+              question:
+                "AI đề xuất một điều khoản hợp đồng nghe hợp lý. Ai nên là người quyết định cuối cùng có dùng điều khoản đó không?",
+              options: [
+                { id: "ai", text: "AI, vì điều khoản đã được viết rõ ràng và hợp lý" },
+                {
+                  id: "person",
+                  text: "Người hiểu bối cảnh pháp lý và hậu quả thật của hợp đồng",
+                },
+                { id: "whoever", text: "Ai đọc trước thì quyết trước cho nhanh" },
+              ],
+              correctOptionId: "person",
+              explanation:
+                "Hợp đồng có hậu quả pháp lý thật — người quyết định phải là người hiểu đủ bối cảnh và chịu trách nhiệm, AI chỉ hỗ trợ soạn và gợi ý, không phải điểm dừng cuối cùng.",
+            }),
+          },
+          {
+            slug: "quy-trinh-cong-tac-ai-checklist-2",
+            title: "Tự kiểm tra phân vai trước khi bắt đầu",
+            type: "CHECKLIST",
+            sortOrder: 2,
+            payload: checklistPayloadSchema.parse({
+              items: [
+                {
+                  id: "decision-owner",
+                  label: "Tôi đã xác định ai quyết định cuối cùng",
+                  detail: "Ghi rõ trước khi bắt đầu, không để đến khi có sự cố mới hỏi.",
+                },
+                {
+                  id: "ai-scope",
+                  label: "Tôi đã giới hạn phạm vi hỗ trợ của AI",
+                  detail: "AI được soạn/gợi ý/kiểm tra nhanh — không được là điểm dừng cuối cùng.",
+                },
+              ],
+            }),
+          },
+        ],
+      },
+      {
+        slug: "quy-trinh-cong-tac-ai-ghi-lai",
+        title: "Ghi lại quyết định và lý do",
+        description:
+          "Sau chủ đề này, bạn biết ghi lại quyết định cuối cùng và lý do chấp nhận hay từ chối gợi ý AI, để tự chịu trách nhiệm và tra lại được về sau.",
+        sortOrder: 2,
+        activities: [
+          {
+            slug: "quy-trinh-cong-tac-ai-bai-3",
+            title: "Một dòng ghi chú giúp bạn chịu trách nhiệm được",
+            type: "LESSON",
+            sortOrder: 0,
+            payload: lessonPayloadSchema.parse({
+              body: 'Ghi lại quyết định không cần dài: chỉ cần "AI gợi ý X, tôi chọn Y vì Z" là đủ để sau này bạn hoặc người khác hiểu vì sao. Thói quen này quan trọng nhất khi bạn TỪ CHỐI gợi ý của AI — ghi rõ lý do từ chối giúp bạn không quên bối cảnh, và nếu quyết định sai, bạn tra lại được lý do tại thời điểm đó thay vì đoán lại từ đầu.',
+              objective:
+                "Ghi lại ngắn gọn quyết định và lý do để có thể tự giải trình sau này.",
+              example: {
+                before: "(Không ghi gì, chỉ nhớ trong đầu là đã chọn cách A)",
+                after:
+                  "Ghi chú: AI gợi ý dùng thư viện X để xử lý ảnh, tôi chọn thư viện Y vì X chưa hỗ trợ định dạng ảnh chúng tôi cần — quyết định ngày 12/07.",
+              },
+              practice: {
+                prompt: "Ghi lại một quyết định gần đây có AI hỗ trợ.",
+                steps: [
+                  "Ghi một câu: AI gợi ý gì.",
+                  "Ghi một câu: bạn chọn gì và vì sao.",
+                  "Nếu bạn từ chối gợi ý của AI, ghi rõ lý do từ chối.",
+                ],
+              },
+              takeaway:
+                "Một ghi chú ngắn về lý do quyết định đáng giá hơn nhiều một lời giải thích cố nhớ lại sau này.",
+            }),
+          },
+          {
+            slug: "quy-trinh-cong-tac-ai-quiz-2",
+            title: "Kiểm tra nhanh: Ghi chú quyết định tốt",
+            type: "QUIZ",
+            sortOrder: 1,
+            payload: quizPayloadSchema.parse({
+              question: "Ghi chú quyết định nào sau đây hữu ích nhất để tra lại sau này?",
+              options: [
+                { id: "vague", text: "\"Đã dùng gợi ý của AI, ổn.\"" },
+                {
+                  id: "reasoned",
+                  text: '"AI gợi ý cách A, tôi chọn cách B vì A không xử lý được trường hợp lỗi mạng — quyết định ngày hôm nay."',
+                },
+                { id: "none", text: "Không ghi gì, vì AI đã giải thích rõ trong lúc trò chuyện" },
+              ],
+              correctOptionId: "reasoned",
+              explanation:
+                "Ghi chú tốt nêu rõ gợi ý của AI, quyết định thật của bạn và lý do — đủ để tra lại mà không cần nhớ lại toàn bộ cuộc trò chuyện đã trôi qua.",
             }),
           },
         ],

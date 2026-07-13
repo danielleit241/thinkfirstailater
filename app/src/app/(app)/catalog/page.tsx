@@ -37,8 +37,8 @@ export default async function CatalogPage() {
           </h1>
           <p className="mt-4 max-w-2xl leading-7 text-[var(--ink-muted)]">
             Ba chủ đề đi từ đặt câu hỏi, kiểm chứng lập luận đến cộng tác có
-            trách nhiệm. Mỗi chủ đề gồm bài đọc ngắn và một hoạt động để bạn tự
-            kiểm tra điều vừa học.
+            trách nhiệm. Mỗi chủ đề chia thành các nhóm bài ngắn, xen bài đọc
+            và hoạt động để bạn tự kiểm tra điều vừa học.
           </p>
         </div>
 

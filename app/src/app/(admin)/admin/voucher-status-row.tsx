@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -11,12 +12,14 @@ export function VoucherStatusRow({
   voucherId,
   brand,
   title,
+  imageUrl,
   initialRiceCost,
   initialActive,
 }: {
   voucherId: string
   brand: string
   title: string
+  imageUrl: string
   initialRiceCost: number
   initialActive: boolean
 }) {
@@ -53,6 +56,9 @@ export function VoucherStatusRow({
       onSubmit={handleSave}
       className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--mist)] p-3"
     >
+      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg">
+        <Image src={imageUrl} alt="" fill sizes="44px" className="object-cover" />
+      </div>
       <div className="flex-1">
         <p className="text-sm text-[var(--ink-soft)]">{brand}</p>
         <p className="text-sm font-semibold">{title}</p>

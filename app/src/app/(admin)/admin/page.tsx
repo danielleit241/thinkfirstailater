@@ -59,6 +59,7 @@ export default async function AdminPage() {
                 voucherId={voucher.id}
                 brand={voucher.brand}
                 title={voucher.title}
+                imageUrl={voucher.imageUrl}
                 initialRiceCost={voucher.riceCost}
                 initialActive={voucher.active}
               />
