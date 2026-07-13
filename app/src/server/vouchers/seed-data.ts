@@ -1,5 +1,5 @@
 /**
- * Mock voucher catalog seed (Phase 7). Three demo vouchers with different
+ * Mock voucher catalog seed. Four demo vouchers with different
  * `riceCost` — explicitly labelled as mock/demo in `description`, no real
  * voucher codes. Idempotent: `upsert`-ed by the stable `slug`, same pattern
  * as `seedLearningCatalog`/`seedRewardConfig` — running this repeatedly
@@ -17,6 +17,14 @@ type VoucherSeed = {
 }
 
 const VOUCHER_SEEDS: VoucherSeed[] = [
+  {
+    slug: "think-first-welcome-demo",
+    brand: "Think First",
+    title: "Voucher chào mừng người học (demo)",
+    description:
+      "Voucher trình diễn dành cho hành trình đầu tiên — không có giá trị quy đổi thật.",
+    riceCost: 10,
+  },
   {
     slug: "highlands-coffee-demo",
     brand: "Highlands Coffee",

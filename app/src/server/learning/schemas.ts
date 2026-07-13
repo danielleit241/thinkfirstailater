@@ -11,6 +11,20 @@ import { z } from "zod"
 
 export const lessonPayloadSchema = z.object({
   body: z.string().min(1),
+  objective: z.string().min(1).optional(),
+  example: z
+    .object({
+      before: z.string().min(1),
+      after: z.string().min(1),
+    })
+    .optional(),
+  practice: z
+    .object({
+      prompt: z.string().min(1),
+      steps: z.array(z.string().min(1)).min(1),
+    })
+    .optional(),
+  takeaway: z.string().min(1).optional(),
 })
 export type LessonPayload = z.infer<typeof lessonPayloadSchema>
 

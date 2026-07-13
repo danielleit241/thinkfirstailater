@@ -5,6 +5,7 @@ import { auth } from "@/server/auth"
 import { prisma } from "@/server/db"
 import {
   getUserActivityCompletions,
+  getUserLearningOverview,
   isActivityCompleted,
   submitChecklistCompletion,
   submitQuizAnswerAndComplete,
@@ -20,6 +21,7 @@ describe("learning catalog: completion", () => {
   const moduleSlug = `test-completion-module-${suffix}`
   const inactiveModuleSlug = `test-completion-module-inactive-${suffix}`
   const quizSlug = `test-completion-quiz-${suffix}`
+  const lessonSlug = `test-completion-lesson-${suffix}`
   const checklistSlug = `test-completion-checklist-${suffix}`
   const inactiveActivitySlug = `test-completion-inactive-activity-${suffix}`
 
@@ -39,7 +41,9 @@ describe("learning catalog: completion", () => {
     })
     await prisma.activity.deleteMany({
       where: {
-        slug: { in: [quizSlug, checklistSlug, inactiveActivitySlug] },
+        slug: {
+          in: [lessonSlug, quizSlug, checklistSlug, inactiveActivitySlug],
+        },
       },
     })
     await prisma.module.deleteMany({
@@ -58,6 +62,7 @@ describe("learning catalog: completion", () => {
         slug: trackSlug,
         title: "Track hoàn thành",
         description: "Track dùng để kiểm thử completion.",
+        sortOrder: -1_000_000,
       },
     })
 
@@ -86,6 +91,7 @@ describe("learning catalog: completion", () => {
         title: "Quiz hoàn thành",
         type: "QUIZ",
         moduleId: activeModule.id,
+        sortOrder: 0,
         payload: {
           question: "2 + 2 = ?",
           options: [
@@ -99,12 +105,24 @@ describe("learning catalog: completion", () => {
     })
     quizActivityId = quiz.id
 
+    await prisma.activity.create({
+      data: {
+        slug: lessonSlug,
+        title: "Bài đọc tham khảo",
+        type: "LESSON",
+        moduleId: activeModule.id,
+        sortOrder: -1,
+        payload: { body: "Nội dung đọc không có mutation hoàn thành." },
+      },
+    })
+
     const checklist = await prisma.activity.create({
       data: {
         slug: checklistSlug,
         title: "Checklist hoàn thành",
         type: "CHECKLIST",
         moduleId: activeModule.id,
+        sortOrder: 1,
         payload: {
           items: [
             { id: "item-1", label: "Mục 1", detail: "Chi tiết 1" },
@@ -151,6 +169,18 @@ describe("learning catalog: completion", () => {
     userBId = userB.id
   })
 
+  it("excludes lesson from actionable progress and chooses the first completable activity", async () => {
+    const overview = await getUserLearningOverview(userAId)
+
+    expect(overview.totalActionable).toBeGreaterThanOrEqual(2)
+    expect(overview.completedActionable).toBe(0)
+    expect(overview.nextActivity).toMatchObject({
+      title: "Quiz hoàn thành",
+      type: "QUIZ",
+    })
+    expect(overview.nextActivity?.href).toContain(quizSlug)
+  })
+
   it("does not record a quiz completion for a wrong answer", async () => {
     const graded = await submitQuizAnswerAndComplete(
       userAId,
@@ -184,6 +214,17 @@ describe("learning catalog: completion", () => {
       where: { userId: userAId, activityId: quizActivityId },
     })
     expect(rowCount).toBe(1)
+  })
+
+  it("advances dashboard projection to the next incomplete actionable activity", async () => {
+    await submitQuizAnswerAndComplete(userAId, quizActivityId, "b")
+    const overview = await getUserLearningOverview(userAId)
+
+    expect(overview.completedActionable).toBeGreaterThanOrEqual(1)
+    expect(overview.nextActivity).toMatchObject({
+      title: "Checklist hoàn thành",
+      type: "CHECKLIST",
+    })
   })
 
   it("rejects a quiz completion attempt against an inactive activity", async () => {

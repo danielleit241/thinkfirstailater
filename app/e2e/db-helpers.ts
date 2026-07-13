@@ -1,10 +1,9 @@
 /**
  * Tiện ích DB dùng chung cho 2 golden-flow spec (Phase 9). Chỉ dùng để
- * chuẩn bị/dọn dẹp dữ liệu mà bản thân UI không có cách nào tạo ra trong một
- * phiên chạy test ngắn (ví dụ: một voucher giá rẻ để test redemption không
- * phải chờ nhiều ngày để tích đủ lúa) — mọi hành vi được kiểm chứng (đăng ký,
- * đăng nhập, hoàn thành activity, nhận lúa, đổi voucher, đổi cấu hình) đều đi
- * qua UI thật, không giả lập qua DB.
+ * dọn dẹp user test và chuẩn bị role/config cho admin flow. User golden flow
+ * dùng nguyên catalog/seed sản phẩm; không tạo voucher fixture riêng. Mọi
+ * hành vi được kiểm chứng (đăng ký, hoàn thành activity, nhận lúa, đổi quà)
+ * đều đi qua UI thật, không giả lập qua DB.
  *
  * Dùng `pg` (raw SQL, driver có sẵn trong `dependencies`) thay vì Prisma
  * Client thật của app: client Prisma sinh ra (`src/generated/prisma/client`)
@@ -16,7 +15,6 @@
  * đúng `prisma/schema.prisma` (đọc từ các file `migration.sql` trong
  * `prisma/migrations`).
  */
-import { randomUUID } from "node:crypto"
 import "dotenv/config"
 import { Client } from "pg"
 
@@ -30,28 +28,6 @@ async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
   }
 }
 
-/** Voucher demo riêng cho E2E, giá đúng bằng lúa user thật sự nhận được qua UI. */
-export async function createE2eTestVoucher(riceCost: number) {
-  const id = randomUUID()
-  const slug = `e2e-golden-flow-voucher-${randomUUID()}`
-  await withClient((client) =>
-    client.query(
-      `INSERT INTO "voucher"
-         (id, slug, brand, title, description, "riceCost", active, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, true, now(), now())`,
-      [
-        id,
-        slug,
-        "E2E Test Brand",
-        "Voucher kiểm thử E2E (demo)",
-        "Voucher chỉ dùng cho Playwright E2E, không phải mã thật.",
-        riceCost,
-      ],
-    ),
-  )
-  return { id, slug }
-}
-
 /**
  * Xoá sạch một user test + mọi dữ liệu liên quan (cascade qua FK
  * `ON DELETE CASCADE` — xem `prisma/migrations`). Phải gọi trước khi xoá
@@ -61,12 +37,6 @@ export async function createE2eTestVoucher(riceCost: number) {
 export async function deleteTestUserByEmail(email: string) {
   await withClient((client) =>
     client.query(`DELETE FROM "user" WHERE email = $1`, [email]),
-  )
-}
-
-export async function deleteTestVoucher(voucherId: string) {
-  await withClient((client) =>
-    client.query(`DELETE FROM "voucher" WHERE id = $1`, [voucherId]),
   )
 }
 

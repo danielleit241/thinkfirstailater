@@ -29,35 +29,41 @@ export function RegisterForm() {
     setError(null)
     setPending(true)
 
-    const { error: signUpError } = await authClient.signUp.email({
-      name,
-      email,
-      password,
-    })
+    try {
+      const { error: signUpError } = await authClient.signUp.email({
+        name,
+        email,
+        password,
+      })
 
-    setPending(false)
-
-    if (signUpError) {
-      if (signUpError.status === 429) {
-        setError("Bạn đã thử quá nhiều lần, vui lòng thử lại sau ít phút.")
-      } else if (
-        (signUpError as { code?: string }).code === DUPLICATE_EMAIL_CODE
-      ) {
-        setError(
-          "Email này đã được đăng ký. Vui lòng đăng nhập hoặc dùng email khác.",
-        )
-      } else {
-        setError("Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.")
+      if (signUpError) {
+        if (signUpError.status === 429) {
+          setError("Bạn đã thử quá nhiều lần, vui lòng thử lại sau ít phút.")
+        } else if (
+          (signUpError as { code?: string }).code === DUPLICATE_EMAIL_CODE
+        ) {
+          setError(
+            "Email này đã được đăng ký. Vui lòng đăng nhập hoặc dùng email khác.",
+          )
+        } else {
+          setError("Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.")
+        }
+        return
       }
-      return
-    }
 
-    router.push("/dashboard")
-    router.refresh()
+      router.push("/dashboard")
+      router.refresh()
+    } catch {
+      setError(
+        "Không thể kết nối để đăng ký. Vui lòng kiểm tra mạng và thử lại.",
+      )
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-5" noValidate>
+    <form onSubmit={handleSubmit} className="grid gap-5">
       <div>
         <Label htmlFor="name">Họ và tên</Label>
         <Input
@@ -92,13 +98,23 @@ export function RegisterForm() {
           autoComplete="new-password"
           minLength={8}
           required
+          aria-describedby="password-requirement"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
+        <p
+          id="password-requirement"
+          className="mt-2 text-xs text-[var(--ink-soft)]"
+        >
+          Tối thiểu 8 ký tự
+        </p>
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-[var(--warm-light)]">
+        <p
+          role="alert"
+          className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800"
+        >
           {error}
         </p>
       ) : null}

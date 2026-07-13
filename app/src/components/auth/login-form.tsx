@@ -20,30 +20,35 @@ export function LoginForm() {
     setError(null)
     setPending(true)
 
-    const { error: signInError } = await authClient.signIn.email({
-      email,
-      password,
-    })
+    try {
+      const { error: signInError } = await authClient.signIn.email({
+        email,
+        password,
+      })
 
-    setPending(false)
-
-    if (signInError) {
-      if (signInError.status === 429) {
-        setError("Bạn đã thử quá nhiều lần, vui lòng thử lại sau ít phút.")
-      } else {
-        // Deliberately generic: Better Auth already masks "email not found"
-        // vs "wrong password" as the same error, so we do the same here.
-        setError("Email hoặc mật khẩu không đúng.")
+      if (signInError) {
+        if (signInError.status === 429) {
+          setError("Bạn đã thử quá nhiều lần, vui lòng thử lại sau ít phút.")
+        } else {
+          // Dùng lỗi chung để không tiết lộ email nào đã có tài khoản.
+          setError("Email hoặc mật khẩu không đúng.")
+        }
+        return
       }
-      return
-    }
 
-    router.push("/dashboard")
-    router.refresh()
+      router.push("/dashboard")
+      router.refresh()
+    } catch {
+      setError(
+        "Không thể kết nối để đăng nhập. Vui lòng kiểm tra mạng và thử lại.",
+      )
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-5" noValidate>
+    <form onSubmit={handleSubmit} className="grid gap-5">
       <div>
         <Label htmlFor="email">Email</Label>
         <Input
@@ -71,7 +76,10 @@ export function LoginForm() {
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-[var(--warm-light)]">
+        <p
+          role="alert"
+          className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800"
+        >
           {error}
         </p>
       ) : null}

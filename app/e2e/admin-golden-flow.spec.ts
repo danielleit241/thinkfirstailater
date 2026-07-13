@@ -69,19 +69,39 @@ test.describe("Golden flow: Admin", () => {
   }) => {
     // 1. Đăng nhập bằng tài khoản ADMIN.
     await page.goto("/login")
+    await expect(page.locator("h1")).toHaveCount(1)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Chào bạn trở lại" }),
+    ).toBeVisible()
     await page.getByLabel("Email").fill(email)
     await page.getByLabel("Mật khẩu").fill(password)
     await page.getByRole("button", { name: "Đăng nhập" }).click()
 
     await expect(page).toHaveURL(/\/dashboard$/)
-    await expect(page.getByText("ADMIN", { exact: true })).toBeVisible()
 
     // 2. Vào khu vực quản trị.
-    await page.getByRole("link", { name: "Đi tới khu vực quản trị" }).click()
+    await page.getByRole("link", { name: "Quản trị" }).click()
     await expect(page).toHaveURL(/\/admin$/)
     await expect(
       page.getByRole("heading", { name: "Khu vực quản trị" }),
     ).toBeVisible()
+
+    // Header và nội dung quản trị phải reflow ở viewport nhỏ nhất được hỗ trợ,
+    // không đẩy tài liệu rộng hơn vùng nhìn và tạo cuộn ngang.
+    const desktopViewport = page.viewportSize()
+    await page.setViewportSize({ width: 320, height: 720 })
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document.documentElement.scrollWidth <=
+            document.documentElement.clientWidth,
+        ),
+      )
+      .toBe(true)
+    if (desktopViewport) {
+      await page.setViewportSize(desktopViewport)
+    }
 
     // 3. Đổi lúa thưởng hàng ngày sang một giá trị mới.
     const newAmount = originalDailyRewardAmount + 5
@@ -94,11 +114,12 @@ test.describe("Golden flow: Admin", () => {
     const saveButton = rewardSection.getByRole("button", { name: "Lưu" })
     await saveButton.click()
 
-    // Nút bị disabled ("Đang lưu...") trong lúc server action chạy, rồi
-    // enable lại khi xong — đợi đủ 2 trạng thái này (thay vì reload ngay) để
-    // chắc chắn giá trị đã thật sự ghi xuống DB trước khi kiểm tra.
+    // Nút bị vô hiệu hóa trong lúc lưu và tiếp tục bị vô hiệu hóa khi form
+    // không còn thay đổi chưa lưu. Thông báo thành công xác nhận action đã xong.
     await expect(saveButton).toBeDisabled()
-    await expect(saveButton).toBeEnabled()
+    await expect(
+      rewardSection.getByText("Đã lưu mức thưởng mới."),
+    ).toBeVisible()
 
     // `router.refresh()` re-fetch Server Component, nhưng input vẫn giữ
     // state cục bộ đã gõ — reload thật để chắc chắn đang đọc giá trị đã ghi

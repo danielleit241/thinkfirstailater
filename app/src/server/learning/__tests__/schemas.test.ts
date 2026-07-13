@@ -20,6 +20,26 @@ describe("learning payload schemas", () => {
     expect(() => lessonPayloadSchema.parse({ body: "" })).toThrow()
   })
 
+  it("đọc được lesson cũ và lesson mở rộng có cấu trúc", () => {
+    expect(lessonPayloadSchema.parse({ body: "Nội dung cũ." })).toEqual({
+      body: "Nội dung cũ.",
+    })
+
+    const lesson = lessonPayloadSchema.parse({
+      body: "Nội dung chính.",
+      objective: "Phân biệt dữ kiện và giả định.",
+      example: { before: "Hỏi ngay AI.", after: "Tách dữ kiện trước." },
+      practice: {
+        prompt: "Chọn một vấn đề thật.",
+        steps: ["Ghi dữ kiện", "Ghi giả định"],
+      },
+      takeaway: "AI đến sau một bước tự nghĩ.",
+    })
+
+    expect(lesson.practice?.steps).toHaveLength(2)
+    expect(lesson.takeaway).toBe("AI đến sau một bước tự nghĩ.")
+  })
+
   it("parses a valid QUIZ payload", () => {
     const result = quizPayloadSchema.parse({
       question: "2 + 2 = ?",

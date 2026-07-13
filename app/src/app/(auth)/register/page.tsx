@@ -10,18 +10,24 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   return (
     <div>
-      <h1 className="mb-1 font-[family-name:var(--font-display)] text-2xl font-semibold text-white">
-        Tạo tài khoản
+      <p className="mb-3 text-sm font-semibold text-[var(--leaf)]">
+        Bắt đầu từ một việc nhỏ
+      </p>
+      <h1 className="mb-2 text-3xl font-bold tracking-[-0.04em] text-[var(--ink)]">
+        Tạo tài khoản học
       </h1>
-      <p className="mb-8 text-sm text-white/60">
-        Đăng ký bằng email và mật khẩu để bắt đầu học.
+      <p className="mb-8 text-sm leading-6 text-[var(--ink-muted)]">
+        Lưu tiến độ, giữ streak và nhận lúa sau hoạt động đầu tiên của bạn.
       </p>
 
       <RegisterForm />
 
-      <p className="mt-6 text-center text-sm text-white/60">
+      <p className="mt-6 text-center text-sm text-[var(--ink-muted)]">
         Đã có tài khoản?{" "}
-        <Link href="/login" className="font-semibold text-[var(--sky)]">
+        <Link
+          href="/login"
+          className="font-semibold text-[var(--leaf)] underline-offset-4 hover:underline"
+        >
           Đăng nhập
         </Link>
       </p>

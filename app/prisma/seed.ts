@@ -4,6 +4,8 @@
  * `src/server/learning/seed-data.ts`, so the same logic can be reused by the
  * integration test that proves running it twice creates no duplicates.
  */
+import "dotenv/config"
+
 import { prisma } from "@/server/db"
 import { seedLearningCatalog } from "@/server/learning/seed-data"
 import { seedRewardConfig } from "@/server/rewards/seed-data"

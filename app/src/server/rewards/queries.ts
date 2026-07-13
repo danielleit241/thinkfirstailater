@@ -11,6 +11,7 @@ export type RewardSummary = {
   balance: number
   currentStreak: number
   history: RewardHistoryItem[]
+  hasRedeemedVoucher: boolean
 }
 
 /**
@@ -23,18 +24,20 @@ export async function getRewardSummary(
   userId: string,
   historyLimit = 5,
 ): Promise<RewardSummary> {
-  const [balanceRow, recentRewards] = await Promise.all([
+  const [balanceRow, recentRewards, redemptionCount] = await Promise.all([
     prisma.riceBalance.findUnique({ where: { userId } }),
     prisma.dailyReward.findMany({
       where: { userId },
       orderBy: { businessDate: "desc" },
       take: historyLimit,
     }),
+    prisma.voucherRedemption.count({ where: { userId }, take: 1 }),
   ])
 
   return {
     balance: balanceRow?.balance ?? 0,
     currentStreak: recentRewards[0]?.streakCount ?? 0,
+    hasRedeemedVoucher: redemptionCount > 0,
     history: recentRewards.map((reward) => ({
       id: reward.id,
       businessDate: reward.businessDate.toISOString().slice(0, 10),

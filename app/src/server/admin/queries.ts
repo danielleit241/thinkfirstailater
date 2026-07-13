@@ -45,12 +45,18 @@ export type AdminTrackItem = {
 
 export async function listAllTracksForAdmin(): Promise<AdminTrackItem[]> {
   const tracks = await prisma.track.findMany({
-    orderBy: { sortOrder: "asc" },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
     include: {
       modules: {
-        orderBy: { sortOrder: "asc" },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
         include: {
-          activities: { orderBy: { sortOrder: "asc" } },
+          activities: {
+            orderBy: [
+              { sortOrder: "asc" },
+              { createdAt: "asc" },
+              { id: "asc" },
+            ],
+          },
         },
       },
     },

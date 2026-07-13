@@ -1,61 +1,92 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { ArrowRight, ReceiptText } from "lucide-react"
 
+import { buttonVariants } from "@/components/ui/button"
 import { toSafeUser } from "@/server/auth/guards"
 import { requireSessionForPage } from "@/server/auth/page-guards"
 import { getVoucherRedemptionHistory } from "@/server/vouchers/queries"
 
 export const metadata: Metadata = {
-  title: "Lịch sử đổi voucher",
+  title: "Lịch sử đổi quà",
 }
 
 export default async function VoucherHistoryPage() {
   const session = await requireSessionForPage()
   const user = toSafeUser(session.user)
-
   const history = await getVoucherRedemptionHistory(user.id)
 
   return (
-    <div className="grid gap-6">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-3xl font-semibold">
-          Lịch sử đổi voucher
-        </h1>
-        <p className="mt-2 text-white/60">
-          Danh sách này hiển thị giá/thông tin voucher tại đúng thời điểm bạn
-          đổi — không đổi theo cấu hình voucher hiện hành sau này.
+    <div className="grid gap-8">
+      <header className="max-w-3xl">
+        <Link
+          href="/vouchers"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--ink-muted)] hover:text-[var(--leaf)]"
+        >
+          ← Quay lại đổi quà
+        </Link>
+        <p className="mt-5 text-sm font-semibold text-[var(--leaf)]">
+          Lịch sử đổi quà
         </p>
-      </div>
+        <h1 className="mt-3 text-4xl font-bold tracking-[-0.04em] md:text-5xl">
+          Những phần thưởng bạn đã đổi.
+        </h1>
+        <p className="mt-4 leading-7 text-[var(--ink-muted)]">
+          Mỗi giao dịch giữ nguyên tên và mức lúa tại thời điểm bạn xác nhận.
+        </p>
+      </header>
 
       {history.length === 0 ? (
-        <p className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/60">
-          Bạn chưa đổi voucher nào.
-        </p>
+        <section className="rounded-2xl border border-[var(--line)] bg-white p-6">
+          <ReceiptText className="text-[var(--leaf)]" aria-hidden="true" />
+          <h2 className="mt-5 text-xl font-bold">Bạn chưa đổi quà nào</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--ink-muted)]">
+            Hoàn thành một quiz hoặc checklist để nhận lúa đầu tiên, rồi quay
+            lại chọn quà.
+          </p>
+          <Link className={`${buttonVariants()} mt-5`} href="/catalog">
+            Đi tới lộ trình <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+        </section>
       ) : (
-        <ul className="grid gap-2 text-sm text-white/70">
+        <ul className="grid gap-3">
           {history.map((item) => (
             <li
               key={item.id}
-              className="flex flex-wrap justify-between gap-x-4 gap-y-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+              className="grid gap-3 rounded-2xl border border-[var(--line)] bg-white p-5 sm:grid-cols-[1fr_auto] sm:items-center"
             >
               <span>
-                {item.voucherBrandSnapshot} — {item.voucherTitleSnapshot}
+                <small className="block font-semibold text-[var(--leaf)]">
+                  {item.voucherBrandSnapshot}
+                </small>
+                <strong className="mt-1 block">
+                  {item.voucherTitleSnapshot}
+                </strong>
               </span>
-              <span>
-                -{item.riceCostSnapshot} lúa ·{" "}
-                {new Date(item.createdAt).toLocaleString("vi-VN")}
+              <span className="text-sm sm:text-right">
+                <strong className="block text-[var(--sunrise-ink)]">
+                  -{item.riceCostSnapshot} lúa
+                </strong>
+                <small className="mt-1 block text-[var(--ink-soft)]">
+                  {new Date(item.createdAt).toLocaleString("vi-VN")}
+                </small>
               </span>
             </li>
           ))}
         </ul>
       )}
 
-      <Link
-        href="/vouchers"
-        className="w-fit rounded-full border border-white/20 bg-white/5 px-5 py-2 text-sm font-bold text-white hover:bg-white/10"
-      >
-        Quay lại đổi voucher
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Link className={buttonVariants()} href="/dashboard">
+          Về tổng quan
+        </Link>
+        <Link
+          className={buttonVariants({ variant: "outline" })}
+          href="/catalog"
+        >
+          Tiếp tục học
+        </Link>
+      </div>
     </div>
   )
 }

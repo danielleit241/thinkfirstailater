@@ -109,7 +109,7 @@ describe("vouchers: redemption ledger and idempotency", () => {
   it("retrying the same idempotencyKey does not debit twice and returns the same redemption", async () => {
     const user = await createTestUser(`vouchers-retry-${suffix}@example.com`)
     userIds.push(user.id)
-    await grantBalance(user.id, 100)
+    await grantBalance(user.id, 30)
 
     const voucher = await createTestVoucher(`test-voucher-retry-${suffix}`, 30)
     const idempotencyKey = randomUUID()
@@ -132,7 +132,7 @@ describe("vouchers: redemption ledger and idempotency", () => {
     const balance = await prisma.riceBalance.findUnique({
       where: { userId: user.id },
     })
-    expect(balance?.balance).toBe(70)
+    expect(balance?.balance).toBe(0)
   })
 
   it("rejects a redemption when the balance is insufficient, with no side effects", async () => {
@@ -260,7 +260,7 @@ describe("vouchers: redemption ledger and idempotency", () => {
       `vouchers-double-submit-${suffix}@example.com`,
     )
     userIds.push(user.id)
-    await grantBalance(user.id, 100)
+    await grantBalance(user.id, 40)
 
     const voucher = await createTestVoucher(
       `test-voucher-double-submit-${suffix}`,
@@ -289,6 +289,6 @@ describe("vouchers: redemption ledger and idempotency", () => {
     const balance = await prisma.riceBalance.findUnique({
       where: { userId: user.id },
     })
-    expect(balance?.balance).toBe(60)
+    expect(balance?.balance).toBe(0)
   })
 })

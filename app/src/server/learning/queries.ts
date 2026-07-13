@@ -11,10 +11,79 @@ import {
 } from "./schemas"
 import type {
   ActivityDetail,
+  LearningOverview,
   ModuleWithActivities,
   TrackDetail,
   TrackListItem,
 } from "./types"
+
+/**
+ * Dashboard projection for activities that can actually be completed.
+ * LESSON is intentionally excluded: it is reference reading and the domain
+ * has no lesson-completion mutation, so including it would create progress
+ * that can never reach 100% and a "next activity" that never advances.
+ */
+export async function getUserLearningOverview(
+  userId: string,
+): Promise<LearningOverview> {
+  const tracks = await prisma.track.findMany({
+    where: { active: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+    select: {
+      slug: true,
+      title: true,
+      modules: {
+        where: { active: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+        select: {
+          activities: {
+            where: {
+              active: true,
+              type: { in: ["QUIZ", "CHECKLIST"] },
+            },
+            orderBy: [
+              { sortOrder: "asc" },
+              { createdAt: "asc" },
+              { id: "asc" },
+            ],
+            select: { id: true, slug: true, title: true, type: true },
+          },
+        },
+      },
+    },
+  })
+
+  const activities = tracks.flatMap((track) =>
+    track.modules.flatMap((module) =>
+      module.activities.map((activity) => ({
+        ...activity,
+        trackSlug: track.slug,
+        trackTitle: track.title,
+      })),
+    ),
+  )
+
+  const completedIds = await getUserActivityCompletions(
+    userId,
+    activities.map((activity) => activity.id),
+  )
+  const nextActivity = activities.find(
+    (activity) => !completedIds.has(activity.id),
+  )
+
+  return {
+    totalActionable: activities.length,
+    completedActionable: completedIds.size,
+    nextActivity: nextActivity
+      ? {
+          title: nextActivity.title,
+          type: nextActivity.type as "QUIZ" | "CHECKLIST",
+          trackTitle: nextActivity.trackTitle,
+          href: `/catalog/${nextActivity.trackSlug}/${nextActivity.slug}`,
+        }
+      : null,
+  }
+}
 
 /**
  * All catalog reads below only ever return `active: true` content. There is
@@ -24,10 +93,46 @@ import type {
  */
 
 export async function listActiveTracks(): Promise<TrackListItem[]> {
-  return prisma.track.findMany({
+  const tracks = await prisma.track.findMany({
     where: { active: true },
-    orderBy: { sortOrder: "asc" },
-    select: { id: true, slug: true, title: true, description: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      modules: {
+        where: { active: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+        select: {
+          description: true,
+          activities: {
+            where: { active: true },
+            select: { type: true },
+          },
+        },
+      },
+    },
+  })
+
+  return tracks.map((track) => {
+    const activities = track.modules.flatMap((module) => module.activities)
+    const lessonCount = activities.filter(
+      (activity) => activity.type === "LESSON",
+    ).length
+
+    return {
+      id: track.id,
+      slug: track.slug,
+      title: track.title,
+      description: track.description,
+      skillOutcome:
+        track.modules[0]?.description ??
+        "Biết áp dụng một thói quen làm việc cùng AI vào công việc thật.",
+      lessonCount,
+      actionableCount: activities.length - lessonCount,
+      estimatedMinutes: activities.length * 2,
+    }
   })
 }
 
@@ -39,11 +144,15 @@ export async function getTrackDetail(
     include: {
       modules: {
         where: { active: true },
-        orderBy: { sortOrder: "asc" },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
         include: {
           activities: {
             where: { active: true },
-            orderBy: { sortOrder: "asc" },
+            orderBy: [
+              { sortOrder: "asc" },
+              { createdAt: "asc" },
+              { id: "asc" },
+            ],
           },
         },
       },
@@ -66,12 +175,22 @@ export async function getTrackDetail(
       type: activity.type,
     })),
   }))
+  const activities = modules.flatMap((module) => module.activities)
+  const lessonCount = activities.filter(
+    (activity) => activity.type === "LESSON",
+  ).length
 
   return {
     id: track.id,
     slug: track.slug,
     title: track.title,
     description: track.description,
+    skillOutcome:
+      modules[0]?.description ??
+      "Biết áp dụng một thói quen làm việc cùng AI vào công việc thật.",
+    lessonCount,
+    actionableCount: activities.length - lessonCount,
+    estimatedMinutes: activities.length * 2,
     modules,
   }
 }
@@ -110,6 +229,10 @@ export async function getActivityDetail(
         slug: activity.slug,
         title: activity.title,
         body: lesson.body,
+        objective: lesson.objective,
+        example: lesson.example,
+        practice: lesson.practice,
+        takeaway: lesson.takeaway,
       }
     }
     case "QUIZ": {

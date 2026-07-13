@@ -71,7 +71,7 @@ export const learningCatalogSeed: TrackSeed[] = [
         slug: "dat-cau-hoi-tot-nen-tang",
         title: "Nền tảng đặt câu hỏi",
         description:
-          "Ba bước đơn giản để biến một vấn đề mơ hồ thành một câu hỏi có thể trả lời được.",
+          "Sau chủ đề này, bạn biết tách dữ kiện, giả định và điều chưa biết để viết câu hỏi có thể kiểm chứng.",
         sortOrder: 0,
         activities: [
           {
@@ -81,6 +81,23 @@ export const learningCatalogSeed: TrackSeed[] = [
             sortOrder: 0,
             payload: lessonPayloadSchema.parse({
               body: "Trước khi hỏi AI, hãy viết ra 3 cột: (1) Dữ kiện — điều bạn chắc chắn đúng; (2) Giả định — điều bạn đang mặc định nhưng chưa kiểm chứng; (3) Điều chưa biết — câu hỏi thật sự cần lời giải. Phần lớn câu hỏi tệ là do nhầm giả định với dữ kiện. Khi đã tách rõ, câu hỏi gửi cho AI sẽ ngắn hơn và chính xác hơn rất nhiều.",
+              objective:
+                "Phân biệt điều đã biết với điều đang đoán trước khi nhờ AI hỗ trợ.",
+              example: {
+                before: "App chậm chắc do database. Hãy sửa giúp tôi.",
+                after:
+                  "Dữ kiện: API /orders tăng từ 300 ms lên 2 giây. Giả định: database là nút thắt. Điều chưa biết: bước nào chiếm thời gian? Hãy đề xuất cách kiểm chứng giả định này từ log và query plan.",
+              },
+              practice: {
+                prompt: "Chọn một vấn đề bạn đang vướng và chia thành ba cột.",
+                steps: [
+                  "Viết 2 dữ kiện có thể chỉ ra nguồn kiểm chứng.",
+                  "Khoanh 1 giả định bạn chưa có bằng chứng.",
+                  "Đổi điều chưa biết thành một câu hỏi cụ thể cho AI.",
+                ],
+              },
+              takeaway:
+                "Câu hỏi tốt bắt đầu bằng việc không gọi giả định là dữ kiện.",
             }),
           },
           {
@@ -156,7 +173,7 @@ export const learningCatalogSeed: TrackSeed[] = [
         slug: "tu-duy-kiem-chung-nen-tang",
         title: "Lập luận trước, kiểm chứng sau",
         description:
-          "Cách xây một lập luận đủ cụ thể để AI có thể phản biện lại — thay vì chỉ đồng ý cho qua.",
+          "Sau chủ đề này, bạn biết trình bày kết luận, lý do và bằng chứng để AI phản biện đúng điểm yếu.",
         sortOrder: 0,
         activities: [
           {
@@ -166,6 +183,24 @@ export const learningCatalogSeed: TrackSeed[] = [
             sortOrder: 0,
             payload: lessonPayloadSchema.parse({
               body: 'Một lập luận tốt có 3 phần: kết luận, lý do, và bằng chứng. Trước khi mở AI, hãy tự viết ra cả ba phần này cho vấn đề của bạn — dù chỉ 2-3 câu. Sau đó, đưa lập luận đó cho AI và yêu cầu nó tìm điểm yếu, thay vì hỏi thẳng "đáp án là gì". Cách này giữ cho tư duy vẫn là của bạn, AI chỉ đóng vai trò kiểm chứng.',
+              objective:
+                "Tạo một lập luận đủ rõ để AI có thể phản biện thay vì chỉ đồng tình.",
+              example: {
+                before: "Có nên dời deadline không? Hãy quyết định giúp tôi.",
+                after:
+                  "Kết luận của tôi: nên dời deadline 2 ngày. Lý do: lỗi thanh toán còn chưa có regression test. Bằng chứng: 3/10 case đang fail. Hãy chỉ ra giả định yếu nhất và một phương án không cần dời deadline.",
+              },
+              practice: {
+                prompt:
+                  "Viết một quyết định công việc dưới dạng lập luận ba phần.",
+                steps: [
+                  "Nêu kết luận của bạn trong một câu.",
+                  "Thêm lý do và bằng chứng có thể kiểm tra.",
+                  "Yêu cầu AI tìm phản ví dụ hoặc điều kiện khiến kết luận sai.",
+                ],
+              },
+              takeaway:
+                "Tự đưa ra lập luận trước; dùng AI để tìm lỗ hổng, không để AI nghĩ thay.",
             }),
           },
           {
@@ -207,7 +242,7 @@ export const learningCatalogSeed: TrackSeed[] = [
         slug: "quy-trinh-cong-tac-ai-nen-tang",
         title: "Quy trình 3 bước cộng tác với AI",
         description:
-          "Một quy trình lặp lại được: hỏi có chủ đích, so sánh nhiều góc nhìn, và tự chịu trách nhiệm trước khi dùng kết quả.",
+          "Sau chủ đề này, bạn biết hỏi có chủ đích, kiểm tra chéo và tự chịu trách nhiệm trước khi dùng kết quả AI.",
         sortOrder: 0,
         activities: [
           {
@@ -217,6 +252,23 @@ export const learningCatalogSeed: TrackSeed[] = [
             sortOrder: 0,
             payload: lessonPayloadSchema.parse({
               body: "Quy trình gợi ý: (1) Hỏi có chủ đích — đã tự nghĩ trước, câu hỏi rõ ràng; (2) So sánh — nếu có thể, hỏi từ hai góc nhìn khác nhau hoặc tự kiểm tra chéo với nguồn khác; (3) Chịu trách nhiệm — bạn là người quyết định dùng hay bỏ câu trả lời, không phải AI. Lặp lại quy trình này biến AI thành một cộng sự đáng tin, thay vì một hộp đen bạn phải tin tưởng mù quáng.",
+              objective:
+                "Dùng một quy trình lặp lại được để biến đầu ra AI thành quyết định có kiểm chứng.",
+              example: {
+                before: "AI đưa đoạn code chạy được nên tôi merge luôn.",
+                after:
+                  "Tôi nêu rõ ràng buộc, yêu cầu hai phương án, đối chiếu với tài liệu và test các nhánh lỗi trước khi tự quyết định merge.",
+              },
+              practice: {
+                prompt: "Áp dụng ba bước cho một đầu ra AI bạn sắp sử dụng.",
+                steps: [
+                  "Ghi mục đích và ràng buộc trước khi hỏi.",
+                  "So sánh câu trả lời với một nguồn hoặc một góc nhìn độc lập.",
+                  "Ghi quyết định cuối cùng và bằng chứng khiến bạn chấp nhận nó.",
+                ],
+              },
+              takeaway:
+                "AI đề xuất; bạn kiểm chứng và chịu trách nhiệm cho quyết định cuối cùng.",
             }),
           },
           {

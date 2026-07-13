@@ -5,6 +5,10 @@ export type TrackListItem = {
   slug: string
   title: string
   description: string
+  skillOutcome: string
+  lessonCount: number
+  actionableCount: number
+  estimatedMinutes: number
 }
 
 export type ActivitySummary = {
@@ -26,6 +30,17 @@ export type TrackDetail = TrackListItem & {
   modules: ModuleWithActivities[]
 }
 
+export type LearningOverview = {
+  totalActionable: number
+  completedActionable: number
+  nextActivity: {
+    title: string
+    type: "QUIZ" | "CHECKLIST"
+    trackTitle: string
+    href: string
+  } | null
+}
+
 export type ActivityDetail =
   | {
       type: "LESSON"
@@ -33,6 +48,10 @@ export type ActivityDetail =
       slug: string
       title: string
       body: string
+      objective?: string
+      example?: { before: string; after: string }
+      practice?: { prompt: string; steps: string[] }
+      takeaway?: string
     }
   | {
       type: "QUIZ"

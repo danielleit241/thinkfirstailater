@@ -27,6 +27,13 @@ export type RedeemVoucherResult =
   | { status: "insufficient_balance"; balance: number }
   | { status: "voucher_unavailable" }
 
+class InsufficientBalanceError extends Error {
+  constructor(readonly balance: number) {
+    super("Số dư không đủ để đổi quà")
+    this.name = "InsufficientBalanceError"
+  }
+}
+
 function toSummary(redemption: {
   id: string
   voucherId: string
@@ -76,6 +83,25 @@ export async function redeemVoucher(
   voucherSlug: string,
   idempotencyKey: string,
 ): Promise<RedeemVoucherResult> {
+  const previousRedemption = await prisma.voucherRedemption.findUnique({
+    where: { userId_idempotencyKey: { userId, idempotencyKey } },
+  })
+
+  if (previousRedemption) {
+    const currentBalance = await prisma.riceBalance.findUnique({
+      where: { userId },
+    })
+    logRewardEvent("reward.redeem.already_redeemed", {
+      userId,
+      voucherSlug,
+    })
+    return {
+      status: "already_redeemed",
+      redemption: toSummary(previousRedemption),
+      balance: currentBalance?.balance ?? 0,
+    }
+  }
+
   const voucher = await prisma.voucher.findUnique({
     where: { slug: voucherSlug },
   })
@@ -91,6 +117,22 @@ export async function redeemVoucher(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const redemptionId = randomUUID()
+      const ledgerEntryId = randomUUID()
+
+      const redemption = await tx.voucherRedemption.create({
+        data: {
+          id: redemptionId,
+          userId,
+          voucherId: voucher.id,
+          idempotencyKey,
+          riceCostSnapshot: voucher.riceCost,
+          voucherTitleSnapshot: voucher.title,
+          voucherBrandSnapshot: voucher.brand,
+          ledgerEntryId,
+        },
+      })
+
       await tx.$executeRaw`
         INSERT INTO "rice_balance" ("userId", "balance", "updatedAt")
         VALUES (${userId}, 0, now())
@@ -108,27 +150,8 @@ export async function redeemVoucher(
         const balanceRow = await tx.riceBalance.findUnique({
           where: { userId },
         })
-        return {
-          status: "insufficient_balance" as const,
-          balance: balanceRow?.balance ?? 0,
-        }
+        throw new InsufficientBalanceError(balanceRow?.balance ?? 0)
       }
-
-      const redemptionId = randomUUID()
-      const ledgerEntryId = randomUUID()
-
-      const redemption = await tx.voucherRedemption.create({
-        data: {
-          id: redemptionId,
-          userId,
-          voucherId: voucher.id,
-          idempotencyKey,
-          riceCostSnapshot: voucher.riceCost,
-          voucherTitleSnapshot: voucher.title,
-          voucherBrandSnapshot: voucher.brand,
-          ledgerEntryId,
-        },
-      })
 
       await tx.riceLedgerEntry.create({
         data: {
@@ -147,20 +170,24 @@ export async function redeemVoucher(
       }
     })
 
-    if (result.status === "redeemed") {
-      logRewardEvent("reward.redeem.success", {
-        userId,
-        voucherSlug,
-      })
-    } else {
+    logRewardEvent("reward.redeem.success", {
+      userId,
+      voucherSlug,
+    })
+
+    return result
+  } catch (error) {
+    if (error instanceof InsufficientBalanceError) {
       logRewardEvent("reward.redeem.insufficient_balance", {
         userId,
         voucherSlug,
       })
+      return {
+        status: "insufficient_balance",
+        balance: error.balance,
+      }
     }
 
-    return result
-  } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"

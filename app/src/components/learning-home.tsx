@@ -1,220 +1,221 @@
-"use client"
-
-import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import {
   ArrowRight,
-  Check,
-  ChevronRight,
-  CircleHelp,
-  Menu,
-  Sparkles,
-  X,
+  BookOpenCheck,
+  BrainCircuit,
+  CheckCircle2,
+  Gift,
+  SearchCheck,
+  Wheat,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { LearningJourney } from "@/components/learning-journey"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
-const checkpoints = [
+const principles = [
   {
-    label: "Tôi hiểu đề bài",
-    detail: "Viết lại vấn đề bằng lời của bạn, không dùng câu chữ của AI.",
+    icon: BrainCircuit,
+    title: "Tự nghĩ trước",
+    description:
+      "Viết lại vấn đề, nêu giả thuyết và nhận ra điều mình chưa biết trước khi mở AI.",
   },
   {
-    label: "Tôi đã có giả thuyết",
-    detail: "Đưa ra ít nhất một hướng giải và lý do bạn tin vào nó.",
+    icon: SearchCheck,
+    title: "Kiểm chứng sau",
+    description:
+      "So sánh câu trả lời với dữ kiện, tìm điểm yếu và giữ quyền quyết định cuối cùng.",
   },
   {
-    label: "Tôi biết cần hỏi gì",
-    detail: "Dùng AI để kiểm chứng điểm mù, không thay bạn suy nghĩ.",
+    icon: CheckCircle2,
+    title: "Chịu trách nhiệm",
+    description:
+      "Biết phần nào do mình làm, phần nào có AI hỗ trợ và giải thích được kết quả.",
   },
 ]
 
-const lessons = [
-  ["01", "Đặt câu hỏi tốt", "Tách dữ kiện, giả định và điều chưa biết."],
-  ["02", "Lập luận trước", "Xây một quan điểm đủ rõ để có thể bị phản biện."],
-  [
-    "03",
-    "Cộng tác với AI",
-    "So sánh, kiểm chứng và chịu trách nhiệm cho kết quả.",
-  ],
+const productJourney = [
+  {
+    icon: BookOpenCheck,
+    label: "Học một cách nghĩ",
+    description:
+      "Mỗi chủ đề chia một năng lực lớn thành các hoạt động ngắn, có ví dụ và đầu ra rõ ràng.",
+  },
+  {
+    icon: BrainCircuit,
+    label: "Thực hành trên việc thật",
+    description:
+      "Bạn viết câu hỏi, lập luận và tự đánh giá trước khi dùng AI để mở rộng hoặc phản biện.",
+  },
+  {
+    icon: Wheat,
+    label: "Nhận lúa khi hoàn thành",
+    description:
+      "Lúa ghi nhận nhịp học đều và những hoạt động đã hoàn tất; không thưởng cho việc bấm qua bài.",
+  },
+  {
+    icon: Gift,
+    label: "Đổi phần thưởng phù hợp",
+    description:
+      "Dùng số lúa tích lũy để đổi voucher có sẵn và theo dõi toàn bộ lịch sử đổi quà của bạn.",
+  },
 ]
 
 export function LearningHome() {
-  const [checked, setChecked] = useState<boolean[]>([true, false, false])
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  const completed = checked.filter(Boolean).length
-
-  function toggleCheckpoint(index: number) {
-    setChecked((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? !item : item)),
-    )
-  }
-
   return (
-    <main>
-      <section className="hero-shell">
-        <div className="hero-image" aria-hidden="true" />
-        <div className="hero-shade" aria-hidden="true" />
+    <main className="landing-shell">
+      <header className="landing-header page-width">
+        <Link className="brand" href="/" aria-label="Think First, AI Later">
+          <span className="brand-mark">
+            <Image src="/icon.png" alt="" width={40} height={40} priority />
+          </span>
+          <span className="brand-copy">
+            <strong>Think First</strong>
+            <small>AI Later</small>
+          </span>
+        </Link>
 
-        <header className="site-header page-width">
-          <a className="brand" href="#top" aria-label="Think First, AI Later">
-            <span className="brand-mark">
-              <Image src="/icon.png" alt="" width={48} height={48} priority />
-            </span>
-            <span>THINK FIRST</span>
-            <span className="brand-divider">/</span>
-            <span className="brand-ai">AI LATER</span>
-          </a>
-
-          <nav className="desktop-nav" aria-label="Điều hướng chính">
-            <a href="#phuong-phap">Phương pháp</a>
-            <a href="#hanh-trinh">Hành trình</a>
-            <a href="#nguyen-tac">Nguyên tắc</a>
-          </nav>
-
-          <Button className="desktop-cta" variant="outline">
-            Vào lớp học <ArrowRight size={16} />
-          </Button>
-          <button
-            className="menu-button"
-            onClick={() => setMenuOpen((value) => !value)}
-            aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
-            aria-expanded={menuOpen}
+        <nav className="landing-nav" aria-label="Điều hướng chính">
+          <a href="#cach-hoc">Cách học</a>
+          <Link href="/login">Đăng nhập</Link>
+          <Link
+            className={cn(buttonVariants(), "landing-header-cta")}
+            href="/register"
           >
-            {menuOpen ? <X /> : <Menu />}
-          </button>
-        </header>
+            Bắt đầu học
+          </Link>
+        </nav>
+      </header>
 
-        {menuOpen && (
-          <nav className="mobile-nav" aria-label="Điều hướng di động">
-            <a href="#phuong-phap" onClick={() => setMenuOpen(false)}>
-              Phương pháp
+      <section className="landing-hero page-width" aria-labelledby="hero-title">
+        <div className="landing-hero-copy">
+          <p className="landing-kicker">Năng lực làm việc cùng AI</p>
+          <h1 id="hero-title">
+            Đừng giao tay lái
+            <span> cho một câu trả lời nhanh.</span>
+          </h1>
+          <p className="landing-lead">
+            Một lộ trình thực hành ngắn giúp bạn đặt câu hỏi rõ, kiểm chứng có
+            căn cứ và dùng AI như người cộng tác — không phải người làm thay.
+          </p>
+          <div className="landing-actions">
+            <Link className={buttonVariants()} href="/register">
+              Bắt đầu bài đầu tiên <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+            <a
+              className={buttonVariants({ variant: "ghost" })}
+              href="#cach-hoc"
+            >
+              Xem hành trình 4 bước
             </a>
-            <a href="#hanh-trinh" onClick={() => setMenuOpen(false)}>
-              Hành trình
-            </a>
-            <a href="#nguyen-tac" onClick={() => setMenuOpen(false)}>
-              Nguyên tắc
-            </a>
-          </nav>
-        )}
-
-        <div id="top" className="hero-content page-width">
-          <div className="hero-copy">
-            <p className="eyebrow">
-              <span /> Giáo dục trong thời đại AI
-            </p>
-            <h1>
-              Nghĩ cho rõ.
-              <br />
-              <span>Rồi mới hỏi AI.</span>
-            </h1>
-            <p className="hero-intro">
-              Một không gian học tập giúp bạn giữ quyền làm chủ tư duy — dùng AI
-              như người phản biện, không phải người làm thay.
-            </p>
-            <div className="hero-actions">
-              <Button>
-                Bắt đầu một thử thách <ArrowRight size={17} />
-              </Button>
-              <a className="text-link" href="#phuong-phap">
-                Xem cách học <ChevronRight size={16} />
-              </a>
-            </div>
           </div>
-
-          <aside className="checkpoint-card" aria-labelledby="checkpoint-title">
-            <div className="card-topline">
-              <span>Thinking checkpoint</span>
-              <span>{completed}/3</span>
-            </div>
-            <div className="progress-track" aria-hidden="true">
-              <span style={{ width: `${(completed / 3) * 100}%` }} />
-            </div>
-            <div className="checkpoint-heading">
-              <div>
-                <p>Trước khi mở AI</p>
-                <h2 id="checkpoint-title">Bạn đã tự nghĩ chưa?</h2>
-              </div>
-              <CircleHelp aria-hidden="true" />
-            </div>
-            <div className="checkpoint-list">
-              {checkpoints.map((checkpoint, index) => (
-                <button
-                  key={checkpoint.label}
-                  className="checkpoint"
-                  onClick={() => toggleCheckpoint(index)}
-                  aria-pressed={checked[index]}
-                >
-                  <span className="check-box">
-                    {checked[index] && <Check size={15} strokeWidth={3} />}
-                  </span>
-                  <span>
-                    <strong>{checkpoint.label}</strong>
-                    <small>{checkpoint.detail}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="checkpoint-note">
-              <Sparkles size={15} /> AI xuất hiện sau bước 3 — đúng lúc bạn cần
-              một góc nhìn thứ hai.
-            </p>
-          </aside>
+          <p className="landing-proof">
+            Không cần kinh nghiệm kỹ thuật · Một hoạt động đầu tiên trong vài
+            phút
+          </p>
         </div>
 
-        <div className="hero-footer page-width" aria-hidden="true">
-          <span>THINK</span>
-          <span className="footer-line" />
-          <span>VERIFY</span>
-          <span className="footer-line orange" />
-          <span>COLLABORATE</span>
-        </div>
+        <aside
+          className="horizon-visual"
+          aria-label="Từ tư duy đến cộng tác cùng AI"
+        >
+          <Image
+            src="/background.png"
+            alt="Con đường chuyển từ bầu trời xanh của tư duy sang thành phố AI màu cam"
+            width={715}
+            height={515}
+            sizes="(max-width: 900px) calc(100vw - 48px), 48vw"
+            priority
+          />
+          <div className="horizon-route" aria-hidden="true">
+            <span>THINK</span>
+            <i />
+            <span>VERIFY</span>
+            <i />
+            <span>AI</span>
+          </div>
+        </aside>
       </section>
 
-      <section id="phuong-phap" className="method-section">
+      <section id="cach-hoc" className="principles-section">
         <div className="page-width">
-          <div className="section-heading">
-            <p className="eyebrow dark">
-              <span /> Phương pháp 3 bước
-            </p>
-            <h2>
-              Tư duy không bị AI lấy mất.
-              <br />
-              Nó chỉ bị bỏ quên.
-            </h2>
+          <div className="section-intro">
+            <p className="section-note">Một nguyên tắc, ba thói quen</p>
+            <h2>AI đến sau khi bạn đã để lại dấu vết tư duy.</h2>
             <p>
-              Mỗi bài học buộc bạn tạo ra một dấu vết tư duy trước khi nhận gợi
-              ý. AI đến sau để mở rộng, không xóa trắng quá trình.
+              Mỗi hoạt động là một việc nhỏ có đầu ra rõ ràng, trạng thái rõ
+              ràng và một bước tiếp theo — không phải một thư viện bài đọc để tự
+              mò.
             </p>
           </div>
 
-          <div id="hanh-trinh" className="lesson-grid">
-            {lessons.map(([number, title, description]) => (
-              <article key={number} className="lesson-card">
-                <span className="lesson-number">{number}</span>
-                <div className="lesson-icon" aria-hidden="true">
-                  {number === "01" ? "?" : number === "02" ? "∵" : "↔"}
+          <div className="principle-grid">
+            {principles.map(({ icon: Icon, title, description }, index) => (
+              <article className="principle-card" key={title}>
+                <div className="principle-topline">
+                  <Icon size={22} aria-hidden="true" />
+                  <span className="utility-label">0{index + 1}</span>
                 </div>
                 <h3>{title}</h3>
                 <p>{description}</p>
-                <a href="#nguyen-tac" aria-label={`Tìm hiểu ${title}`}>
-                  Khám phá <ArrowRight size={16} />
-                </a>
               </article>
             ))}
           </div>
-        </div>
-      </section>
 
-      <section id="nguyen-tac" className="manifesto-section">
-        <div className="page-width manifesto-inner">
-          <p>Nguyên tắc lớp học</p>
-          <blockquote>
-            “Câu trả lời nhanh không quan trọng bằng một câu hỏi thuộc về bạn.”
-          </blockquote>
-          <Button variant="outline">Đọc tuyên ngôn học tập</Button>
+          <div className="product-journey" aria-labelledby="journey-title">
+            <div className="product-journey-intro">
+              <p className="section-note">Một vòng học trọn vẹn</p>
+              <h2 id="journey-title">Biết mình sẽ làm gì — và nhận được gì.</h2>
+              <p>
+                Bạn không cần tự đoán bước tiếp theo. Mỗi hoạt động nối việc học
+                với thực hành, tiến độ và phần thưởng có thể kiểm tra lại.
+              </p>
+            </div>
+
+            <ol className="product-journey-list">
+              {productJourney.map(
+                ({ icon: Icon, label, description }, index) => (
+                  <li key={label}>
+                    <span className="journey-step-icon">
+                      <Icon size={21} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <span className="utility-label">BƯỚC {index + 1}</span>
+                      <h3>{label}</h3>
+                      <p>{description}</p>
+                    </div>
+                  </li>
+                ),
+              )}
+            </ol>
+
+            <aside
+              className="journey-card"
+              aria-label="Ví dụ tiến trình một chủ đề học"
+            >
+              <div className="journey-card-heading">
+                <span className="utility-label">LỘ TRÌNH 01</span>
+                <span>Khoảng 5 phút</span>
+              </div>
+              <h3>Từ câu hỏi đến một quyết định có căn cứ</h3>
+              <LearningJourney activeStep={0} />
+              <div className="journey-note">
+                <span aria-hidden="true">✦</span>
+                Hoàn thành hoạt động để giữ streak và nhận lúa trong ngày.
+              </div>
+            </aside>
+          </div>
+
+          <div className="landing-closing">
+            <div>
+              <p className="section-note">Học bằng việc làm</p>
+              <h2>Bắt đầu với một câu hỏi thật của bạn.</h2>
+            </div>
+            <Link className={buttonVariants()} href="/register">
+              Tạo tài khoản miễn phí <ArrowRight size={18} aria-hidden="true" />
+            </Link>
+          </div>
         </div>
       </section>
     </main>
